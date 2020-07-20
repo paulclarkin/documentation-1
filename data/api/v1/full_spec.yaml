@@ -1693,12 +1693,12 @@ components:
             When it matches an integration name, Datadog automatically installs the
             corresponding parsers and facets.
 
-            See [reserved attribute](https://docs.datadoghq.com/logs/log_collection/#reserved-attributes).'
+            See [reserved attributes](https://docs.datadoghq.com/logs/log_collection/#reserved-attributes).'
           example: nginx
           type: string
         ddtags:
           description: Tags associated with your logs.
-          example: env:staging,service:payment
+          example: env:staging,version:5.1
           type: string
         hostname:
           description: The name of the originating host of the log.
@@ -1713,6 +1713,16 @@ components:
             That value is then highlighted and displayed in the Logstream, where it
             is indexed for full text search.'
           example: 2019-11-19T14:37:58,995 INFO [process.name][20081] Hello World
+          type: string
+        service:
+          description: 'The name of the application or service generating the log
+            events.
+
+            It is used to switch from Logs to APM, so make sure you define the same
+            value when you use both products.
+
+            See [reserved attributes](https://docs.datadoghq.com/logs/log_collection/#reserved-attributes).'
+          example: payment
           type: string
       required:
       - name
@@ -6691,6 +6701,47 @@ components:
             $ref: '#/components/schemas/SyntheticsBrowserTestResultShort'
           type: array
       type: object
+    SyntheticsGlobalVariable:
+      description: Synthetics global variable.
+      properties:
+        description:
+          description: Description of the global variable.
+          type: string
+        id:
+          description: Unique identifier of the global variable.
+          readOnly: true
+          type: string
+        name:
+          description: Name of the global variable.
+          type: string
+        tags:
+          description: Tags of the global variable.
+          items:
+            description: Tag name.
+            type: string
+          type: array
+        value:
+          $ref: '#/components/schemas/SyntheticsGlobalVariableValue'
+      required:
+      - description
+      - name
+      - tags
+      - value
+      type: object
+    SyntheticsGlobalVariableValue:
+      description: Value of the global variable.
+      example:
+        secure: true
+        value: value
+      properties:
+        secure:
+          description: Determines if the variable is secure.
+          type: boolean
+        value:
+          description: Value of the global variable.
+          type: string
+      required:
+      - value
     SyntheticsListTestsResponse:
       description: Object containing an array of Synthetic tests configuration.
       properties:
@@ -15385,6 +15436,115 @@ paths:
       tags:
       - Synthetics
       x-codegen-request-body-name: body
+  /api/v1/synthetics/variables:
+    post:
+      description: Create a Synthetics global variable.
+      operationId: CreateGlobalVariable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyntheticsGlobalVariable'
+        description: Details of the global variable to create.
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticsGlobalVariable'
+          description: OK
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: Invalid request
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: Forbidden
+      summary: Create a global variable
+      tags:
+      - Synthetics
+      x-codegen-request-body-name: body
+  /api/v1/synthetics/variables/{variable_id}:
+    delete:
+      description: Delete a Synthetics global variable.
+      operationId: DeleteGlobalVariable
+      parameters:
+      - description: The ID of the global variable.
+        in: path
+        name: variable_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: JSON format is wrong
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: Forbidden
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: Not found
+      summary: Delete a global variable
+      tags:
+      - Synthetics
+    put:
+      description: Edit a Synthetics global variable.
+      operationId: EditGlobalVariable
+      parameters:
+      - description: The ID of the global variable.
+        in: path
+        name: variable_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SyntheticsGlobalVariable'
+        description: Details of the global variable to update.
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticsGlobalVariable'
+          description: OK
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: Invalid request
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIErrorResponse'
+          description: Forbidden
+      summary: Edit a global variable
+      tags:
+      - Synthetics
+      x-codegen-request-body-name: body
   /api/v1/tags/hosts:
     get:
       description: Return a mapping of tags to hosts for your whole infrastructure.
@@ -16730,7 +16890,8 @@ paths:
         the HTTP log endpoint is `http-intake.logs.datadoghq.eu`.'
       operationId: SubmitLog
       parameters:
-      - in: header
+      - description: HTTP header used to compress the media-type.
+        in: header
         name: Content-Encoding
         required: false
         schema:
