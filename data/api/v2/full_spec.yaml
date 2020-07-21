@@ -1512,6 +1512,13 @@ components:
     SecurityMonitoringRuleQuery:
       description: Query for matching rule.
       properties:
+        distinctFields:
+          description: Fields for which the cardinality is measured (we only support
+            one at the moment)
+          items:
+            description: Field
+            type: string
+          type: array
         groupByFields:
           description: Fields to group by.
           items:
